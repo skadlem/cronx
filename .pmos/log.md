@@ -31,3 +31,77 @@
   guards against). The charter/plan is the artifact every later wave depends on, and this
   project is a semantics-correctness problem where a thin charter is expensive.
 - haiku-4-5 has no benchmark data in benchmarks.json, so it could not be tier-checked anyway.
+
+## 2026-09-04 — Wave 1 attempt 1: FAILED (rate limit), partial output kept
+- planner @ claude-opus-5, ladder 0. Ran 405s, then died on **HTTP 429 — account session
+  limit** ("resets 11:30pm Asia/Hong_Kong"). `is_error: true`, `terminal_reason: api_error`.
+- NOT a model-quality failure and NOT a bad prompt: it is an account-level throttle. The
+  spawn-fallback ladder ("was this failure the model's fault?") answers *no*, so demoting the
+  planner to sonnet-5 would be the wrong reflex.
+- Produced `.pmos/charter.md` (206 lines, complete: all six forcing questions answered, R-001..
+  R-014, RSK-1..RSK-5, jurisdictions, team). Did NOT produce plan.md, architecture.md, the
+  ADRs, or roster-proposal.md — though the charter already references ADR-001..ADR-011 and
+  T-001..T-010 by id, so the retry must honour that numbering.
+
+### Deliberate deviation from spawn-fallback.md rule 3 ("never continue a half-finished run")
+- That rule exists so a worker never resumes from a corrupted or half-reasoned state. Here the
+  task decomposes at clean ARTIFACT boundaries and the charter is verifiably whole, so
+  re-running it from a clean start would burn budget to regenerate a good artifact and risk a
+  worse one. Retry is therefore SCOPED to the missing artifacts, with the finished charter
+  passed in as upstream context.
+- Retry stays at ladder 0 (claude-opus-5): the limit window reset at 23:30 HKT, one minute
+  before the retry, and the semantic ADRs are the highest-value output in the project.
+- Split into two sequential workers to cut re-exposure to the limit and to put the mechanical
+  half on a cheaper model: 1a = ADRs + architecture (opus-5), 1b = plan + roster (sonnet-5).
+
+### Ledger accuracy note
+- cost.py recorded **$0.7235**; the host result's own `total_cost_usd` was **$1.4413**. The
+  ledger prices only input/output tokens and ignores cache-creation (49,158) and cache-read
+  (446,168) tokens, so it under-reports by ~2x on cache-heavy runs. Track the real figure
+  against `budget_usd`; the ledger total is a floor, not the actual spend.
+
+## 2026-09-04 — Wave 1a OK, and a live oracle found (coordinator work)
+- planner-1a @ claude-opus-5: OK. Wrote ADR-001..ADR-011 and architecture.md (269 lines).
+  artifacts.py exits 0. Ledger $1.39; host's own total_cost_usd $3.22 (cache tokens again).
+- planner-1b @ claude-sonnet-5 (plan.md + roster-proposal.md): spawned, running.
+
+### FINDING: RSK-2 was wrong — there IS a cron on this host to diff against
+The charter says "no network and no guaranteed cron daemon here to diff against" and makes the
+KB chunks the sole oracle. In fact this box has `cron 3.0pl1-200ubuntu1` (Debian vixie-cron),
+`man 5 crontab`, and **`crontab -n <file>`, a dry-run syntax checker that validates WITHOUT
+installing** (verified: user had no crontab before or after the probes). That is a real
+differential oracle and it downgrades RSK-2 substantially.
+
+### It also settles the GATE 1 open question, against the man page's own NOTES section
+crontab(5) here states verbatim that "this implementation only checks if the first character
+is a *", and gives the worked case `0 0 */2 * sun` = Sundays on uneven dates. **ADR-001's
+choice A is correct.** POSIX and Vixie genuinely disagree here, so the brief's "match POSIX /
+Vixie" cannot be satisfied both ways — picking Vixie and recording it is exactly right.
+
+### Three ADRs are contradicted by measurement; ADR-006 is wrong as written
+Probed every disputed form against `crontab -n`:
+- **ADR-006 (`a/s` step-without-range) is WRONG for this implementation.** `5/10 * * * *` ->
+  "bad minute"; `0 0 5/10 * *` -> "bad day-of-month". It is a cronie/other-dialect extension,
+  not Debian vixie-cron. ADR-006 decided to ACCEPT it. Must be revised: match (reject) or keep
+  accepting as an explicitly documented deviation. Cannot stand on its current rationale.
+- **ADR-005 (names in ranges/lists) reaches the right verdict on a stale premise.** The man
+  page still says "Ranges or lists of names are not allowed", but the binary ACCEPTS
+  `MON-FRI`, `JAN,JUL`, `MON-FRI/2`. Accepting is correct; the rationale should cite the probe.
+- **UNCOVERED semantics: reverse/wrapping ranges.** `22-2`, `30-10`, `FRI-MON`, `NOV-FEB` are
+  all ACCEPTED. No ADR covers this and my KB chunk asserted the opposite ("Vixie requires
+  a <= b"). Needs ADR-012. Acceptance is measured; the wrap reading is inferred, since the
+  daemon's runtime behaviour was not observed.
+- **ADR-007 (`#`) gets a much stronger rationale.** `0 0 * * 5#2 /bin/true` is ACCEPTED — but
+  `#` opens a COMMENT, so cron reads dow=5 and silently discards `#2` AND the command. A user
+  pasting a Quartz expression gets a different schedule and no command. Rejecting `#` loudly
+  is right.
+- Also: dom/month `0` are REJECTED even though crontab(5)'s own table prints "0-31"/"0-12".
+  Real ranges are 1-31 / 1-12. The KB chunk was right, the man table is misleading.
+
+### Actions taken
+- Corrected the two wrong KB chunks in place (`cron-field-semantics`, `cron-dom-dow-or-rule`)
+  and added `cron-live-oracle-probe` with every measured verdict. Reindexed; budgets still
+  positive. The oracle had to be fixed BEFORE the implementer wave inherits it.
+- For GATE 1: propose adding a differential QA task — run cronx's accept/reject verdict against
+  `crontab -n` over a corpus of expressions. That is a far stronger check than self-written
+  tests and directly attacks RSK-2.
