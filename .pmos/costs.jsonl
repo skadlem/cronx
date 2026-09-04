@@ -1,2 +1,3 @@
 {"ts": "2026-09-04T12:15:04+00:00", "wave": null, "role": "planner", "label": "planner", "model": "claude-opus-5", "effort": "", "tokens_in": 22, "tokens_out": 28937, "usd": 0.7235, "source": "measured", "status": "failed"}
 {"ts": "2026-09-04T15:44:59+00:00", "wave": null, "role": "planner", "label": "planner-1a", "model": "claude-opus-5", "effort": "", "tokens_in": 46, "tokens_out": 55764, "usd": 1.3943, "source": "measured", "status": "ok"}
+{"ts": "2026-09-04T15:50:52+00:00", "wave": null, "role": "planner", "label": "planner-1b", "model": "claude-sonnet-5", "effort": "", "tokens_in": 20, "tokens_out": 24349, "usd": 0.3653, "source": "measured", "status": "ok"}

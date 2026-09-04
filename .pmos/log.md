@@ -105,3 +105,45 @@ Probed every disputed form against `crontab -n`:
 - For GATE 1: propose adding a differential QA task — run cronx's accept/reject verdict against
   `crontab -n` over a corpus of expressions. That is a far stronger check than self-written
   tests and directly attacks RSK-2.
+
+## 2026-09-04 — Wave 1b OK; GATE 1 PASSED (user approved)
+- planner-1b @ claude-sonnet-5: OK, $0.72. plan.md (4 phases, T-001..T-011, A-001..A-014) and
+  roster-proposal.md. artifacts.py clean under --strict: 86 references, all resolve.
+- Wave 1 total: $4.66 actual / $2.12 ledger.
+
+### GATE 1 decisions (user)
+1. Roster: lean three confirmed. ONE implementer, sequential (only fork is T-004/T-006, too
+   small to pay for a second worker on ~600 LOC).
+2. Models: implementer = claude-sonnet-5, reviewer = claude-opus-5. Written to team-model.json.
+   Saved defaults' claude-sonnet-4-5 is not served on this host -> mapped to claude-sonnet-5.
+3. Budget cap: $30 (raised from the $20 default; remaining work est. $10-18 and a single
+   rate-limit retry could otherwise breach mid-wave).
+4. ADR-006 (`a/s`): **REJECT**, matching the local vixie-cron. Revise the ADR's decision.
+5. Reverse ranges: **REJECT** with a precise error. New ADR-012.
+
+### Coordinator-authored amendments (deviation from "planner owns these artifacts")
+The five edits below encode decisions the user just made plus measurements I took myself. I
+made them directly rather than re-spawning the planner: it would have had to rediscover the
+probe context to write down conclusions that were already settled, at ~$1-3 and some risk of
+drift from what was actually approved. The reviewer wave checks these against the code, so
+they are not self-certified. Logged as a deliberate deviation.
+Amendments made (all verified by `artifacts.py --strict`: 14 reqs / 12 tasks / 15 criteria /
+12 decisions / 96 references, all resolving):
+- ADR-006 REVISED to reject `a/s`, with the probe output quoted and a revision note saying the
+  original rested on a false KB claim. Id not superseded — nothing was built against it.
+- ADR-012 NEW: reject descending ranges. States plainly that the empty-set reading is an
+  INFERENCE from Vixie's ascending `for` loop, not a measurement, and that rejecting is the
+  only option that does not require cronx to assert something it cannot support.
+- ADR-005 verdict unchanged, premise corrected: the man page's "names not allowed" sentence is
+  stale documentation, not an enforced rule, so accepting names is not a deviation at all.
+- ADR-007 rationale strengthened with the `#` finding (cron accepts `5#2`, reads dow=5, and
+  silently discards both `#2` and the command).
+- charter RSK-2 DOWNGRADED certain/medium -> low/low, with the residual scope stated: the
+  oracle checks SYNTAX only, so the DST policy and ADR-012's inference remain KB-backed.
+- plan: new T-012 (differential test vs `crontab -n`, skipUnless(which("crontab"))) + A-015;
+  T-002 and T-008 re-pointed at ADR-012; T-002 retitled to five element forms.
+
+## 2026-09-04 — Wave 2 (implementation) begins
+Split into 4 sequential implementer chunks on claude-sonnet-5, one per plan phase, rather than
+one 9-task run: a single spawn covering the whole build is what got killed by the rate limit in
+wave 1, and phase boundaries are where the architecture's dependency graph actually cuts.

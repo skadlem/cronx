@@ -172,12 +172,17 @@ domain chunks, which are the designated oracle for this project.
   chunk (no `match`/`case`, no evaluated PEP-604 unions, no `datetime.UTC`, no `tomllib`, no
   `typing.Self`, no `itertools.batched`). Residual risk is accepted and stated: a 3.9 API
   regression can still ship undetected. It is disclosed at GATE 1, not papered over.
-- **RSK-2 — the semantic oracle cannot be diffed against a live cron (likelihood: certain;
-  impact: medium).** No network, no guaranteed cron daemon. Mitigation: the KB domain chunks
-  are the declared oracle; T-008 encodes each documented case as a named test that cites its
-  chunk, so a later correction is a localised test change plus an ADR supersession. The single
-  place where the authorities genuinely conflict (`*/n` and the star flag) is isolated in
-  ADR-001 and raised as the GATE 1 question.
+- **RSK-2 — semantic-oracle risk (DOWNGRADED at GATE 1 from "certain/medium" to
+  "low/low").** This charter assumed there was no live cron to diff against. There is: the
+  host carries `cron 3.0pl1-200ubuntu1` (Debian vixie-cron), `crontab(5)`, and **`crontab -n`,
+  a dry-run syntax checker that validates without installing anything**. T-012 turns that into
+  a differential test. The probe already (a) confirmed ADR-001's first-character star rule
+  directly from crontab(5)'s NOTES section, closing what was this charter's one open GATE 1
+  question; (b) reversed ADR-006, whose accept-`a/s` decision rested on a false KB claim;
+  (c) surfaced descending ranges, which no ADR covered (now ADR-012); and (d) corrected
+  ADR-005's premise. Residual risk: `crontab -n` validates SYNTAX only, so runtime semantics
+  — the DST policy of ADR-002/ADR-003 and the empty-set inference behind ADR-012 — remain
+  unverifiable here and stay backed by the KB chunks alone.
 - **RSK-3 — scope creep in the English output (likelihood: medium; impact: medium).** "Plain
   English" is an invitation to build a natural-language generator. Mitigation: ADR-009 fixes a
   closed template grammar and makes a golden file the contract (T-006); anything the grammar

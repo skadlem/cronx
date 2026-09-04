@@ -62,3 +62,31 @@ per-element error, which names the field and the token.
 T-003: `0 0 2 * * *` (6 fields), `0 0 L * *`, `0 0 * * MON#2`, `0 0 ? * MON`, `0 0 15W * *`
 and `@every 5m` each exit 1 with a message naming the offending token; no traceback on any
 of them.
+
+## Measurement added at GATE 1: `#` is worse than "unsupported"
+
+Probing the host's cron turned up a sharper reason to reject `#` than "Quartz-only syntax":
+
+```
+$ printf '0 0 * * 5#2 /bin/true\n' > c; crontab -n c
+The syntax of the crontab file was successfully checked.
+```
+
+It is **accepted — but not as Quartz's "2nd Friday"**. `#` opens a comment, so cron reads
+day-of-week `5` and silently discards `#2` *and the command itself*. Someone pasting a
+Quartz expression into a crontab gets a schedule that differs from what they wrote AND a
+line that runs nothing at all, with no error at any point.
+
+This is the strongest case in the project for rejecting loudly: the reference implementation
+does not fail on `#`, it silently changes the meaning. cronx's error should say so:
+
+```
+cronx: error: day-of-week: '5#2' is Quartz syntax (nth weekday of the month), not supported
+       by POSIX or Vixie cron; note that cron would read this as day-of-week 5 and treat
+       '#2' as the start of a comment
+```
+
+The measured verdicts for the other extensions (all rejected by the host's cron, "bad
+day-of-month"): `?`, `L`, `15W`. Six- and four-field lines are rejected too. KB:
+`cron-live-oracle-probe`.
+

@@ -1,0 +1,23 @@
+{
+  "note": "Approved at GATE 1 by the user, 2026-09-04. Lean roster. Effort values are recorded from rosters/lean.json but are INERT on this host: hosts/claude.json declares effort_flag '(not supported; omit)', so nothing is passed at spawn.",
+  "team": "lean",
+  "budget_usd": 30.0,
+  "roles": {
+    "planner": {
+      "model": "claude-opus-5",
+      "effort": "high",
+      "status": "complete (wave 1)"
+    },
+    "implementer": {
+      "model": "claude-sonnet-5",
+      "effort": "high"
+    },
+    "reviewer": {
+      "model": "claude-opus-5",
+      "effort": "high",
+      "why": "T-010's 3.9 stdlib-API floor audit has no test behind it on this host (no 3.9 interpreter), so it rests entirely on model judgment. recommend.py scored this role UNSCORED on verification (80% of its purpose), so its 19.6 was noise, not evidence."
+    }
+  },
+  "availability_note": "The saved defaults file pinned backend/qa to claude-sonnet-4-5, which this host does not serve; mapped forward to claude-sonnet-5 (the family's newest per lean.json newest_only) and confirmed by the user at GATE 1.",
+  "ledger_caveat": "cost.py prices only input/output tokens and ignores cache-creation and cache-read, under-reporting roughly 2x on cache-heavy runs. Wave 1: ledger $2.12 vs host-reported $4.66 actual. Track budget_usd against the host figure."
+}

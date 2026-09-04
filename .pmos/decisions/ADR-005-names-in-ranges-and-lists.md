@@ -53,3 +53,25 @@ map to 0…6, and the bare numeric `7` also means Sunday.
 T-002/T-008: `MON-FRI`, `mon-fri`, `JAN,JUL`, `MON-FRI/2` parse to the expected value sets;
 `0 0 MON * *` and `0 0 * MON *` are errors naming the field and the token; `FRI-MON` is a
 range error; `0 0 * * 0` ≡ `0 0 * * 7` ≡ `0 0 * * SUN`.
+
+## Measurement added at GATE 1 (verdict unchanged, premise corrected)
+
+This ADR argued from "classic ISC forbids it, cronie allows it, we choose the superset".
+The coordinator has since measured the cron installed on this host — and it is not a
+superset question at all. `crontab(5)` here still prints "Ranges or lists of names are not
+allowed", but the binary that ships with that very man page accepts them:
+
+```
+ACCEPT  0 0 * * MON-FRI      ACCEPT  0 0 * JAN,JUL *
+ACCEPT  0 0 * * MON-FRI/2    ACCEPT  0 0 * JAN-MAR *
+```
+
+(`cron 3.0pl1-200ubuntu1` via `crontab -n`. KB: `cron-live-oracle-probe`.)
+
+So the man page sentence is **stale documentation, not a rule the implementation enforces**.
+Accepting name ranges and lists is therefore not a deviation at all — it *matches* the
+reference implementation, and this ADR records the sentence it appears to contradict so a
+later reader who finds that sentence is not left thinking cronx is wrong.
+
+T-008 asserts cronx's accept verdict on these four matches `crontab -n`'s.
+

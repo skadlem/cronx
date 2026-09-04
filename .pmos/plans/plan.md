@@ -17,7 +17,7 @@ Status: draft | Owner: planner (PM + architect) | Updated: 2026-09-04
   (T-006, T-009, T-007). This is the first runnable deliverable.
 - **Phase 4 — verify** (Wave 3, charter §6): the crontab(5) oracle suite and monotonicity
   property test, the README/CLI-contract doc, and the reviewer's 3.9 stdlib-API floor audit
-  with the test report (T-008, T-011, T-010) → GATE 2.
+  with the test report (T-008, T-012, T-011, T-010) → GATE 2.
 
 ## Task graph
 <!-- One `- id: T-NNN` block per task, ids stable for the life of the project. -->
@@ -38,12 +38,13 @@ Status: draft | Owner: planner (PM + architect) | Updated: 2026-09-04
 
 ```yaml
 - id: T-002
-  title: Field/element parser - the six element forms, per-field range validation, name
-    resolution in month/day-of-week, and field-and-token error messages
+  title: Field/element parser - the five element forms, per-field range validation, name
+    resolution in month/day-of-week, rejection of `a/s` and descending ranges, and
+    field-and-token error messages carrying a rewrite hint
   role: implementer
   satisfies: R-001, R-002, R-009
   depends_on: T-001
-  decided_by: ADR-005, ADR-006, ADR-010
+  decided_by: ADR-005, ADR-006, ADR-010, ADR-012
   touches: cronx/parse.py, tests/test_parse.py
   test_strategy: python3 -m unittest tests.test_parse -v
 ```
@@ -127,9 +128,25 @@ Status: draft | Owner: planner (PM + architect) | Updated: 2026-09-04
   role: implementer
   satisfies: R-012
   depends_on: T-004, T-005, T-006, T-009
-  decided_by: ADR-001, ADR-002, ADR-003, ADR-005, ADR-006, ADR-008
+  decided_by: ADR-001, ADR-002, ADR-003, ADR-005, ADR-006, ADR-008, ADR-012
   touches: tests/test_oracle.py, tests/test_monotonicity.py
   test_strategy: python3 -m unittest tests.test_oracle tests.test_monotonicity -v
+```
+
+```yaml
+- id: T-012
+  title: Differential test against the host's real cron - assert cronx's accept/reject
+    verdict matches `crontab -n` over a corpus of expressions, with the deliberate
+    divergences (ADR-012 descending ranges, and `#` per ADR-007) asserted AS divergences
+  role: reviewer
+  satisfies: R-012, R-013
+  depends_on: T-008
+  decided_by: ADR-005, ADR-006, ADR-007, ADR-012
+  touches: tests/test_differential.py
+  test_strategy: python3 -m unittest tests.test_differential -v
+  note: skipUnless(shutil.which("crontab")) so the suite stays green on hosts without cron;
+    `crontab -n` validates without installing (verified - it left the user's crontab absent).
+    Syntax only - it cannot verify DST semantics or ADR-012's empty-set inference.
 ```
 
 ```yaml
@@ -305,6 +322,18 @@ Status: draft | Owner: planner (PM + architect) | Updated: 2026-09-04
     complete with zero failures
   verifies: T-010
   how: python3 -m unittest discover -v
+```
+
+```yaml
+- id: A-015
+  title: cronx's accept/reject verdict agrees with the host's real cron, except where an
+    ADR says otherwise
+  form: WHEN each expression in the differential corpus is given to both cronx and
+    `crontab -n` THE SYSTEM SHALL reach the same accept/reject verdict, except for the
+    cases ADR-012 and ADR-007 name as intentional divergences, which SHALL diverge in the
+    documented direction
+  verifies: T-012
+  how: python3 -m unittest tests.test_differential -v
 ```
 
 ## Out of plan
