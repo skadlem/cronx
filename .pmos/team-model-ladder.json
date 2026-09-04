@@ -1,0 +1,14 @@
+{
+ "planner": [
+  "claude-opus-5",
+  "claude-sonnet-5"
+ ],
+ "implementer": [
+  "claude-opus-5",
+  "claude-sonnet-5"
+ ],
+ "reviewer": [
+  "claude-opus-5",
+  "claude-sonnet-5"
+ ]
+}

@@ -1,0 +1,10 @@
+# PMOS knowledge base: binary, regenerable from .pmos/kb-sources/
+.pmos/kb.sqlite3
+.pmos/kb.sqlite3-wal
+.pmos/kb.sqlite3-shm
+.pmos/host-run-*.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
