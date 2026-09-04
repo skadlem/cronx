@@ -147,3 +147,26 @@ Amendments made (all verified by `artifacts.py --strict`: 14 reqs / 12 tasks / 1
 Split into 4 sequential implementer chunks on claude-sonnet-5, one per plan phase, rather than
 one 9-task run: a single spawn covering the whole build is what got killed by the rate limit in
 wave 1, and phase boundaries are where the architecture's dependency graph actually cuts.
+
+## 2026-09-05 — Wave 2 chunk 1 attempt 1: FAILED (ConnectionRefused), partial output kept
+- impl-c1 @ claude-sonnet-5, ladder 0. `is_error: true`, `terminal_reason: api_error`,
+  "API Error: Connection refused — a firewall or proxy may be blocking it". Ledger $0.41,
+  host-reported $0.90. Second infrastructure failure in a row (wave 1 was a 429); neither is
+  the model's fault, so the ladder stays at 0 and the model is NOT demoted.
+- Produced: the `cronx/` skeleton (all five modules as docstring-only stubs, `__init__.py`,
+  `__main__.py`), `tests/test_py39_syntax.py` (31 lines, passes) and `tests/test_parse.py`
+  (201 lines). Did NOT produce `.pmos/out/implementer/notes.md`.
+- The worker wrote tests BEFORE the implementation, which is the TDD order it was asked for —
+  so the surviving artifact is the valuable half. Spot-checked: the tests assert `.star` and
+  `.text` verbatim preservation, i.e. the ADR-001 invariant. Keeping them.
+- Retry is scoped to finishing the chunk (implementation + review of the existing tests)
+  rather than a clean restart, same reasoning as wave 1: clean artifact boundary, and the
+  tests are worth more than a fresh re-derivation.
+
+### Defect found while assessing the wreckage: A-014's command finds no tests
+`tests/` has no `__init__.py`, so `python3 -m unittest discover -v` — which is A-014's literal
+`how:` command — collects ZERO tests. It exits 5 (not 0), so the criterion fails loudly rather
+than passing vacuously, which is the good outcome; but the command in the plan does not work
+as written. Fix is `tests/__init__.py`, folded into the retry. Worth recording because "the
+acceptance command runs nothing and looks fine" is the exact failure class the QA gate exists
+to catch, and here it was one `__init__.py` away from being silent.
