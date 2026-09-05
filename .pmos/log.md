@@ -256,3 +256,21 @@ to catch, and here it was one `__init__.py` away from being silent.
   artifacts --strict still 0; both review runs in ledger as reviewer/estimated.
 - Deviation note: re-review was scoped to fix-verification, not a fresh full attack — the
   protocol's CONCERNS loop says 'fix + re-review', and the fix list was known.
+
+## 2026-09-05 — GATE 2 passed (user)
+User approved the packet as presented and released the remaining waves on qwen3.8-flash.
+Approve-now variant chosen (no Claude-in-ladder hedge). Chunk 1 retry (T-002/T-003
+implementation) spawns immediately; chunks 2-4 and the reviewer wave follow the plan phases.
+L-3 roundtrip and the six fixes are part of what was approved.
+
+## 2026-09-05 — Wave 2 chunk 1 RETRY 2: GREEN (T-002, T-003 delivered)
+- impl-c1-retry2 @ qwen3.8-flash via delegate_task, 18 min / 24 calls. parse.py 178 LOC
+  (budget ~180). 55/55 tests green, artifacts --strict 0. Coordinator verified the
+  ADR-critical invariants by live probe, not just the suite: first-char star, odd dom */2,
+  7->0, macro rewrite, and all four rejection hints (a/s, descending, #, crontab-line).
+- WORKER JUDGMENT WIN: the single failure it reported was MY typo in WhitespaceTest
+  (assertTrue(s.hour.star) on hour.text='0' — self-contradicts ADR-001). It refused to
+  bend the parser or silently edit the test, STOP-and-flagged per procedure. Fixed the test
+  (star False for literal '0', star True for dom/dow), noted here as coordinator test edit.
+- Process lesson kept: chunk-1's two deaths were infra, not model; flash at tier-bar-0.80
+  delivered phase 1 first try. Ladder stays 0.

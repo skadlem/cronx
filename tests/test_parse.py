@@ -216,7 +216,10 @@ class WhitespaceTest(unittest.TestCase):
     def test_leading_trailing_and_double_spaces_parse(self):
         s = parse("  0  0 *  *  * \t")
         self.assertEqual(s.minute.values, frozenset({0}))
-        self.assertTrue(s.hour.star)
+        self.assertEqual(s.hour.text, "0")          # field order: min hour dom mon dow
+        self.assertFalse(s.hour.star)               # ADR-001: literal "0" is restricted
+        self.assertTrue(s.dom.star)
+        self.assertTrue(s.dow.star)
 
 
 if __name__ == "__main__":
