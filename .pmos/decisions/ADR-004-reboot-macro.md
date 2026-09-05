@@ -7,6 +7,11 @@ Supersedes:
 ## Context
 
 R-003 commits to accepting the `@`-macros case-insensitively, `@reboot` among them.
+Amendment 2026-09-05 (reviewer wave, A-015 finding 1): the live `crontab -n` oracle showed
+this host's vixie is CASE-SENSITIVE on macros (@YEARLY, @WEEKLY, @ReBoot -> "bad time
+syntax"). cronx's case-insensitivity is therefore a THIRD licensed divergence class in the
+differential corpus (cronx ACCEPT / host cron REJECT), asserted as such in
+tests/test_differential.py — a deliberate charter choice, not a bug.
 `@reboot` has no wall-clock schedule at all — it fires when the daemon starts — so "the
 next N run times" is undefined for it. The KB names this a decision point requiring an ADR
 (KB: `cron-macros`).

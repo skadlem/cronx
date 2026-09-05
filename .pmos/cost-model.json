@@ -1,0 +1,16 @@
+{
+ "roles": {
+  "implementer": {
+   "tokens_in": 20,
+   "tokens_out": 14036,
+   "runs": 2
+  },
+  "planner": {
+   "tokens_in": 22,
+   "tokens_out": 28937,
+   "runs": 3
+  }
+ },
+ "samples": 5,
+ "suggested_est_tokens_per_worker": 27137
+}

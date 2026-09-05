@@ -335,8 +335,10 @@ Status: draft | Owner: planner (PM + architect) | Updated: 2026-09-04
     ADR says otherwise
   form: WHEN each expression in the differential corpus is given to both cronx and
     `crontab -n` THE SYSTEM SHALL reach the same accept/reject verdict, except for the
-    cases ADR-012 and ADR-007 name as intentional divergences, which SHALL diverge in the
-    documented direction
+    cases ADR-012 and ADR-007 name as intentional divergences — plus the uppercase-macro
+    class licensed by R-003/ADR-004 (vixie's macro table is case-sensitive; cronx accepts
+    all cases) per coordinator ruling 2026-09-05 — which SHALL diverge in the documented
+    direction
   verifies: T-012
   how: python3 -m unittest tests.test_differential -v
   note: corpus is PINNED, not reviewer's choice — the KB `cron-live-oracle-probe` transcript

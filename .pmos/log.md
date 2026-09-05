@@ -323,3 +323,24 @@ L-3 roundtrip and the six fixes are part of what was approved.
   Steered live into the reviewer child before its corpus freezes; ADR-004 already names
   case-insensitivity as a deliberate choice ("most implementations"), so no ADR change —
   the divergence just needs asserting, not just tolerating.
+
+## 2026-09-05 — Reviewer wave OK; QA GATE PASSED (stage 8); checkpoint
+- reviewer @ qwen3.8-flash (T-012+T-010), 27 min / 40 calls. tests/test_differential.py: 107
+  pinned-corpus cases (92 agree + 3 licensed divergence classes in measured directions, incl.
+  the uppercase-macro class I ruled mid-wave; user crontab verified untouched in-suite).
+  A-013 grep zero matches cronx/ AND tests/; AST per-import floor audit of all 19 shipped
+  files, python3 -S re-run proves stdlib-only. test-report.md: 15/15 pass, tree a83ce22d.
+- Coordinator independent re-derivation: golden file 15 rows vs describe(parse()) = 0
+  mismatches (my own walk, not the reviewer's); differential standalone green; suite 147/147
+  0.72s; coverage 15/15 reported 15 passing; events DECISION continue (0 rework loops).
+- Reviewer finding 1 (uppercase-macro licence missing from A-015 text) FIXED in plan A-015
+  form clause; finding 2 (1-2-3, */2/3 accepted by vixie's prefix-parsing get_list) —
+  disposition: NO new ADR. cronx rejecting malformed multi-separator tokens is the default
+  charter behaviour (R-001 enumerates the forms, R-010 rejects what isn't one; 'reject
+  rather than guess'). Adding an ADR for each vixie mis-parse would chase an unbounded list;
+  the differential corpus stays pinned and this class sits outside it by design. Logged.
+- Measured facts for evaluation: 11 worker runs total (6 impl, 3 plan, 2 review), 3 failed
+  (all INFRA: 429x2, ConnectionRefused), 1 ladder retry, 0 rework loops; QA first-pass 15/15
+  pass, 0 defects found by gate, 0 product bugs exposed by 4 implementation chunks;
+  1 coordinator typo in own test (caught by worker refusal); ledger $2.90 (claude runs),
+  8 flash runs unpriced/estimated (host shim gives no usage on delegate_task).
