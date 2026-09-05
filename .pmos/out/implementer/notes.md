@@ -320,3 +320,84 @@ reproduces §4's example block byte-for-byte; exit codes 0/1/2 spot-checked.
 - Missing-tzdb pin depends on `zoneinfo._zoneinfo` staying a pure-Python fallback on 3.9–3.14
   (it is; but a future C-cache clear API could simplify the test).
 - T-008 oracle suite, T-010 reviewer audit, T-012 differential — later waves, unchanged.
+
+---
+
+## Wave 2 chunk 4 — T-008 (oracle + monotonicity) + T-011 (README + contract test)
+
+Date: 2026-09-05 | Spawn model: qwen3.8-flash | Tests/docs only — no cronx/ source touched.
+
+### Tasks done
+
+- **T-008 / A-010** — `tests/test_oracle.py` (143 LOC, budget ~120), 11 tests through the
+  public entry points (`parse`+`next_runs`, one real `python3 -m cronx` subprocess case).
+- **T-008 / A-011** — `tests/test_monotonicity.py` (106 LOC, budget ~60), 2 property tests;
+  A-011's pinned form quoted verbatim in the module docstring. Runtime 0.23 s.
+- **T-011 / A-012** — `README.md` (127 lines, budget ~120) + `tests/test_readme.py`
+  (123 LOC), 7 mechanical tests: usage line from `--help` subprocess (COLUMNS=80 pinned);
+  README's json block parsed and its key lists compared in-order against `main()`-produced
+  `--json` output (top level, five fields, field sub-keys, four `next` keys); exit-code
+  table rows {0,1,2} each exercised; **every `$ python3 -m cronx ...` example executed and
+  its stdout diffed byte-for-byte** (3 examples: NY gap block verbatim from architecture §4,
+  @reboot, the 0 0 13 * FRI OR-rule anti-footgun). Mutation-checked: renaming a JSON key,
+  perturbing one example second, and truncating the usage line each make the test FAIL
+  (verified, README restored, `diff` clean).
+
+### Oracle case → KB chunk map (all cited inline in comments)
+
+| Case | KB chunks |
+|---|---|
+| 1 `0 0 13 * FRI` OR rule (13th-non-Friday emitted; Fri-13th once; no dupes) | id=55 (project qa), id=39 (cron-dom-dow-or-rule 'CONFIRMED by crontab(5)') |
+| 2 `0 0 * * 0` ≡ `0 0 * * 7`, first 10 instants | id=55, id=30 (cron-field-semantics) |
+| 3 `0 0 */2 * MON` = odd-date AND Monday + even-Monday / odd-Tue anti-cases | id=39 (crontab(5) 'uneven date' worked case), id=55 |
+| 4 spring-forward `0 2 * * *` NY 2026-03-08 gap_shifted→03:00 nominal 02:00; `* * * * *` across gap, monotone, no dupes | id=29 (cron-dst-transitions), id=55; ADR-002 |
+| 5 fall-back `30 1 * * *` single ambiguous_first; `* 1 * * *` both passes increasing | id=29, id=55; ADR-003 |
+| 6 Asia/Kathmandu +05:45 renders :45 | id=29, id=55 |
+| 7 unsatisfiable `0 0 30 2 *` → 0 runs within HORIZON_DAYS; CLI exit 0 + 'no runs found within 9 years' | id=55; ADR-008/ADR-010 |
+| 8 `0 0 29 2 *` from 2026 finds 2028-02-29 | id=55; ADR-008 'Pinned by' |
+
+### Monotonicity sampling strategy (documented in test docstring, cites A-011)
+
+- Transition instants per zone located by a day-granularity `utcoffset()` scan over
+  2022-01-01..2026-12-31 (UTC) + integer-second bisection inside the change day —
+  10 transitions NY, 10 Lord_Howe, 0 Kathmandu (asserts the A-011 no-op path).
+- `* * * * *` walked per transition window: `next_runs(..., t-3h, 361)` (−3 h..+2 h
+  covers a 1 h jump, Lord_Howe's 30 min both directions, plus the following hour);
+  20 windows × 361 = 7 220 instants, strictly increasing, no dupes.
+- `*/17 * * * *` walked a full year per zone from 2024-01-01 UTC; 96 fires/day × 366
+  days = 35 136 → `-n 35136` spans exactly the year (count and final-instant window
+  pinned, both 2024 transitions crossed; Kathmandu asserted to cross none).
+- Total T-008 runtime ~0.27 s against the ~20 s budget.
+
+### Product bugs exposed
+
+**None.** Every spec-pinned value (2026-03-08T03:00:00-04:00 jump, 05:30Z/06:30Z fall-back
+passes, 2028-02-29, Fri-13 2026-02-13, odd Mondays 01-05/01-19/…, +05:45) matched the
+implementation on first run — the whole suite went green without touching source. No RED
+tests in the tree. (The chunk-1 flagged `test_parse.py` contradiction remains coordinator
+business; unrelated to these files.)
+
+### Verification — exact commands
+
+- `python3 -m unittest discover -v` → **Ran 140 tests in 0.454 s — OK** (120 prior +
+  11 oracle + 2 monotonicity + 7 readme). Full wall time incl. interpreter start 0.50 s.
+- `python3 -m unittest tests.test_oracle tests.test_monotonicity tests.test_readme -v`
+  (plan's T-008/T-011 `how`) → OK separately and combined.
+- `python3 /home/madiyar/pm-agent-team/tools/artifacts.py --project . --strict` → **exit 0**
+  ("artifacts OK: every reference resolves, every item is covered").
+- README example outputs, the §4 gap block, help text (COLUMNS=80), and all four dst values
+  captured from live CLI runs, not transcribed from memory.
+
+### Notes / judgement calls
+
+- Help block captured with `COLUMNS=80`: argparse wraps help at terminal width, so the
+  README's verbatim usage block is pinned to 80 cols and `UsageLineTest` re-runs `--help`
+  under the same env. The usage-line assertion itself (first line of `--help`, a hard
+  newline in argparse) is width-proof; the full-block byte-diff is what depends on 80.
+- README's json block is one line with values arrays truncated to 3 elements (budget vs
+  the §4 elision convention); the test parses it with `json.loads` and compares **key
+  lists** — exactness is about names/order, matching A-012's "field names" wording, and
+  `values` truncation is stated in the README itself.
+- `ambiguous_first` appears quoted nowhere; the dst test therefore accepts backtick- or
+  quote-delimited mentions (regex) and additionally requires the four-value list sentence.
+- Touched only the five allowed files.

@@ -302,3 +302,14 @@ L-3 roundtrip and the six fixes are part of what was approved.
   Python class with reset_tzpath(<nonexistent dir>) + tearDown restore. In notes.md.
 - LOC final-ish: parse 178/180, match 69/90, occurrences 124/~120 (flagged), describe+cli
   per module budgets in notes.
+
+## 2026-09-05 — Wave 2 chunk 4: GREEN (T-008, T-011) — implementation complete
+- impl-c4 @ qwen3.8-flash, 27 min / 64 calls. 140/140 in 0.45s. No cronx/ source touched
+  (allowed-files respected), zero product bugs exposed, artifacts --strict 0.
+- Coordinator audit: oracle citations real (id=55/39/30/29 + ADR pointers); AND-case dates
+  independently recomputed (Jan 5, Jan 19, Feb 9 2026 = first odd Mondays); README test is
+  mechanical (subprocess --help + byte-diffed examples) and the child mutation-verified it
+  (rename/perturb/truncate each fail).
+- Product state: all implementer tasks T-001..T-009, T-011 done. Remaining: reviewer wave
+  (T-010 audit + T-012 differential, A-015 pinned corpus) -> QA test-report keyed by A-id
+  -> stage 8 -> checkpoint routine.
