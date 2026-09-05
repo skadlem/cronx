@@ -274,3 +274,12 @@ L-3 roundtrip and the six fixes are part of what was approved.
   (star False for literal '0', star True for dom/dow), noted here as coordinator test edit.
 - Process lesson kept: chunk-1's two deaths were infra, not model; flash at tier-bar-0.80
   delivered phase 1 first try. Ladder stays 0.
+
+## 2026-09-05 — Wave 2 chunk 2: GREEN (T-004, T-005)
+- impl-c2 @ qwen3.8-flash, 18 min / 25 calls. match.py 69 LOC (budget 90), occurrences.py
+  124 (~120, flagged as comment density). 89/89 green; existing 55 unchanged; notes pure-append
+  verified. Coordinator live probes ALL ADR-002/003/011 behaviours beyond the child's own
+  tests: gap shift to 03:00-04:00 w/ nominal, wildcard gap DROP, fold first-pass-only vs
+  both, strict monotonicity, Lord_Howe 30-min gap, unknown-zone code 2.
+- Child's unchecked list is honest and correctly scoped (tzdb-missing pin -> T-007, 5-year
+  property -> T-008, 3.9 runtime -> T-010).
