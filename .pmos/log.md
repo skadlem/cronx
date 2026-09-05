@@ -313,3 +313,13 @@ L-3 roundtrip and the six fixes are part of what was approved.
 - Product state: all implementer tasks T-001..T-009, T-011 done. Remaining: reviewer wave
   (T-010 audit + T-012 differential, A-015 pinned corpus) -> QA test-report keyed by A-id
   -> stage 8 -> checkpoint routine.
+
+## 2026-09-05 — Reviewer wave running + new probe finding: vixie macros are CASE-SENSITIVE
+- Independent coordinator probe (building my own crontab -n verdict table to diff the
+  reviewer's A-015 claims against): all 7 @-macros accepted lowercase, ALL uppercase/mixed
+  variants rejected ("bad time syntax") — including @ReBoot. cronx accepts every case per
+  R-003/ADR-004. Third licensed divergence class for test_differential.py (after ADR-012
+  ranges, ADR-007 L/W/#/?): charter-mandated macro case-insensitivity vs vixie's exact-match.
+  Steered live into the reviewer child before its corpus freezes; ADR-004 already names
+  case-insensitivity as a deliberate choice ("most implementations"), so no ADR change —
+  the divergence just needs asserting, not just tolerating.
