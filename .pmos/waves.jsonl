@@ -2,3 +2,6 @@
 {"ts": "2026-09-04T15:44:59+00:00", "wave": null, "role": "planner", "task": null, "model": "claude-opus-5", "ladder": 0, "outcome": "ok", "tokens_in": 46, "tokens_out": 55764, "usd": 1.3943, "gate": null}
 {"ts": "2026-09-04T15:50:52+00:00", "wave": null, "role": "planner", "task": null, "model": "claude-sonnet-5", "ladder": 1, "outcome": "ok", "tokens_in": 20, "tokens_out": 24349, "usd": 0.3653, "gate": null}
 {"ts": "2026-09-04T16:30:21+00:00", "wave": null, "role": "implementer", "task": null, "model": "claude-sonnet-5", "ladder": 0, "outcome": "failed", "tokens_in": 32, "tokens_out": 27105, "usd": 0.4067, "gate": null}
+{"ts": "2026-09-04T16:49:21+00:00", "wave": null, "role": "implementer", "task": null, "model": "claude-sonnet-5", "ladder": 0, "outcome": "failed", "tokens_in": 8, "tokens_out": 967, "usd": 0.0145, "gate": null}
+{"ts": "2026-09-05T05:19:31+00:00", "wave": 2, "role": "reviewer", "task": null, "model": "qwen3.8-flash", "ladder": 0, "outcome": "ok", "tokens_in": 150000, "tokens_out": 12000, "usd": null, "gate": null}
+{"ts": "2026-09-05T05:31:57+00:00", "wave": 2, "role": "reviewer", "task": null, "model": "qwen3.8-flash", "ladder": 0, "outcome": "ok", "tokens_in": 90000, "tokens_out": 9000, "usd": null, "gate": null}

@@ -191,10 +191,11 @@ Status: draft | Owner: planner (PM + architect) | Updated: 2026-09-04
 ```yaml
 - id: A-002
   title: Every documented element form parses correctly or is rejected by field and token
-  form: WHEN a five-field expression using any of *, a, a-b, a-b/s, */s or a/s (including
-    comma lists and month/day-of-week names) is parsed THE SYSTEM SHALL produce the exact
-    documented value set, or raise CronxError naming the offending field and token if the
-    element is out of range or malformed
+  form: WHEN a five-field expression using any of *, a, a-b, a-b/s or */s (including comma
+    lists and month/day-of-week names) is parsed THE SYSTEM SHALL produce the exact
+    documented value set; WHEN a/s, a descending range, or an out-of-range or malformed
+    element is given THE SYSTEM SHALL raise CronxError naming the offending field and token
+    (ADR-006, ADR-012)
   verifies: T-002
   how: python3 -m unittest tests.test_parse -v
 ```
@@ -205,7 +206,8 @@ Status: draft | Owner: planner (PM + architect) | Updated: 2026-09-04
   form: WHEN an @-macro is given case-insensitively THE SYSTEM SHALL parse it (or, for
     @reboot, set the reboot flag and skip matching); WHEN a 6/7-field, L/W/#/?, or @every
     expression is given THE SYSTEM SHALL exit 1 with a message naming the offending token
-    and the dialect it belongs to
+    and the dialect it belongs to — except a 6-field form whose last token is command-shaped
+    gets the crontab-line hint instead (ADR-007 amendment 2026-09-05)
   verifies: T-003
   how: python3 -m unittest tests.test_macros -v
 ```
@@ -288,8 +290,11 @@ Status: draft | Owner: planner (PM + architect) | Updated: 2026-09-04
 - id: A-011
   title: Emitted instants are strictly increasing across every DST transition
   form: WHEN next_runs is walked across every spring-forward and fall-back transition of
-    three zones (including a non-whole-hour offset) over five years THE SYSTEM SHALL emit
-    instants in strictly increasing order with no duplicate instant
+    America/New_York (1 h step), Australia/Lord_Howe (30 min step), and Asia/Kathmandu
+    (permanent +05:45, no transitions — the no-op path) over 2022-01-01..2026-12-31
+    (--from pinned, schedule `* * * * *` sampled per transition window and `*/17 * * * *`
+    walked for a full year each zone) THE SYSTEM SHALL emit instants in strictly increasing
+    order with no duplicate instant
   verifies: T-008
   how: python3 -m unittest tests.test_monotonicity -v
 ```
@@ -334,6 +339,9 @@ Status: draft | Owner: planner (PM + architect) | Updated: 2026-09-04
     documented direction
   verifies: T-012
   how: python3 -m unittest tests.test_differential -v
+  note: corpus is PINNED, not reviewer's choice — the KB `cron-live-oracle-probe` transcript
+    cases plus every ADR "Pinned by" expression (ADR-001/004/005/006/007/012), plus
+    boundary tokens per field (0/1/31/32/59/60, JAN/DEC/SUN/MON/7/8) — 40 minimum.
 ```
 
 ## Out of plan

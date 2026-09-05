@@ -53,14 +53,13 @@ Status: draft | Owner: planner (PM + architect) | Updated: 2026-09-04
      (`Europe/Dublin` loads). Stdlib-only + timezone-aware is satisfiable.
    - VERIFIED: this host has only python3.14; there is **no 3.9 interpreter**. 3.9
      compatibility cannot be verified by execution. → risk, section 7.
-   - BELIEVED, not verified: the Vixie/POSIX semantics recorded in the KB domain chunks are
-     accurate. There is no network and no guaranteed `cron` daemon here to diff against.
-     Mitigation: every semantic claim becomes a named test citing its KB chunk as the oracle;
-     a later correction is an ADR supersession, not a silent edit.
-   - BELIEVED: POSIX text and the deployed Vixie/cronie implementation agree. They do **not**
-     agree on whether `*/2` in the day field counts as "restricted" — see ADR-001, which
-     picks the implementation and flags the residual uncertainty. This is the one open
-     question for GATE 1.
+   - VERIFIED at GATE 1 (was BELIEVED): the Vixie/POSIX semantics KB chunks were corrected
+     against the live host oracle (`cron 3.0pl1`, `crontab -n`) — the probe reversed ADR-006,
+     spawned ADR-012, and fixed two wrong KB claims. Syntax semantics are now measured; DST
+     runtime semantics remain KB-backed (RSK-2 residual).
+   - RESOLVED at GATE 1: the Vixie/POSIX day-rule disagreement is settled for Vixie by
+     crontab(5)'s NOTES section (ADR-001's choice A, confirmed verbatim by the "uneven date"
+     worked case). Not an open question any more.
    - ASSUMED: "plain-English explanation" is satisfied by a deterministic templated sentence,
      not crontab.guru-grade prose for every combination. Fixed by ADR-009; reversible.
    - ASSUMED: the user wants a CLI, not an importable library. The brief says CLI; the
@@ -101,8 +100,10 @@ dependency (served by `--json` and the exit codes).
 
 ### In scope (this project)
 
-- R-001: Parse the five-field syntax — `*`, `a`, `a-b`, `a-b/s`, `*/s`, `a/s`, and
-  comma-separated lists of those — with per-field legal-range validation.
+- R-001: Parse the five-field syntax — `*`, `a`, `a-b`, `a-b/s`, `*/s`, and comma-separated
+  lists of those — with per-field legal-range validation. (`a/s` was removed at GATE 1: the
+  live `crontab -n` probe showed Debian vixie-cron rejects it, and ADR-006 was revised to
+  reject it with a rewrite hint.)
 - R-002: Accept three-letter month and day-of-week names case-insensitively, including as
   range endpoints, list members and step bases (`MON-FRI`, `JAN,JUL`).
 - R-003: Accept the `@`-macros case-insensitively: `@yearly`, `@annually`, `@monthly`,
@@ -113,12 +114,16 @@ dependency (served by `--json` and the exit codes).
 - R-006: Print the next N run times (default 5) in a specified IANA timezone, in increasing
   instant order, each rendered with its local UTC offset and its UTC equivalent.
 - R-007: Handle DST spring-forward gaps and fall-back ambiguity explicitly, including
-  non-whole-hour offsets and zones whose rules changed historically.
-- R-008: `--json` emits a documented, stable machine-readable object on stdout.
+  non-whole-hour offsets (Asia/Kathmandu +05:45) and half-hour offset steps
+  (Australia/Lord_Howe) on the same resolution path (pinned zones named in A-011).
+- R-008: `--json` emits a documented machine-readable object on stdout — "documented" means
+  every key appears in README.md and A-012 checks they agree; no cross-version stability
+  promise is made (charter §4).
 - R-009: Exit non-zero with a precise error message — naming the field and the offending
   token — for an invalid expression, unknown macro or unknown timezone. No traceback.
 - R-010: Reject non-POSIX syntax extensions (6- and 7-field forms with seconds or year, `L`,
-  `W`, `#`, `?`, `@every N`) with a precise error rather than guessing.
+  `W`, `#`, `?`, `@every N`), bare `a/s` steps (ADR-006) and descending ranges (ADR-012)
+  with a precise error rather than guessing.
 - R-011: Run on Python 3.9 using only the standard library: no pip install, no network at
   runtime or at test time.
 - R-012: Ship a stdlib `unittest` suite that runs offline and encodes the crontab(5) oracle

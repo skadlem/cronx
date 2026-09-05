@@ -1,21 +1,32 @@
 {
-  "note": "Approved at GATE 1 by the user, 2026-09-04. Lean roster. Roles are top-level keys because tools/cost.py reads them there (budget_of(), cost.py:115). Effort values come from rosters/lean.json but are INERT on this host: hosts/claude.json declares effort_flag '(not supported; omit)', so nothing is passed at spawn.",
-  "team": "lean",
+  "_note": "Approved at GATE 1 by the user, 2026-09-04. Lean roster. Roles are top-level keys because tools/cost.py reads them there (budget_of(), cost.py:115). Effort values come from rosters/lean.json but are INERT on this host: hosts/claude.json declares effort_flag '(not supported; omit)', so nothing is passed at spawn.",
+  "_team": "lean",
   "budget_usd": 30.0,
   "planner": {
-    "model": "claude-opus-5",
+    "model": "qwen3.8-flash",
     "effort": "high",
-    "status": "complete (wave 1)"
+    "provider": "custom:QwenTokenPlan",
+    "revised": "2026-09-05 GATE 1 revision: Anthropic API edge-blocked (403) from this host's IP; user re-pinned ALL roles to qwen3.8-flash over the scored table (planner/implementer qwen3.8-max, reviewer deepseek-v4-pro) - explicit cost-first call, tier bars knowingly overridden."
   },
   "implementer": {
-    "model": "claude-sonnet-5",
-    "effort": "high"
+    "model": "qwen3.8-flash",
+    "effort": "high",
+    "provider": "custom:QwenTokenPlan",
+    "revised": "2026-09-05 GATE 1 revision: Anthropic API edge-blocked (403) from this host's IP; user re-pinned ALL roles to qwen3.8-flash over the scored table (planner/implementer qwen3.8-max, reviewer deepseek-v4-pro) - explicit cost-first call, tier bars knowingly overridden."
   },
   "reviewer": {
-    "model": "claude-opus-5",
+    "model": "qwen3.8-flash",
     "effort": "high",
-    "why": "T-010's 3.9 stdlib-API floor audit has no test behind it on this host (no 3.9 interpreter), so it rests entirely on model judgment. recommend.py marked this role UNSCORED on verification, 80% of its purpose, so its 19.6 was noise not evidence."
+    "provider": "custom:QwenTokenPlan",
+    "revised": "2026-09-05 GATE 1 revision: Anthropic API edge-blocked (403) from this host's IP; user re-pinned ALL roles to qwen3.8-flash over the scored table (planner/implementer qwen3.8-max, reviewer deepseek-v4-pro) - explicit cost-first call, tier bars knowingly overridden."
   },
-  "availability_note": "The saved defaults file pinned backend/qa to claude-sonnet-4-5, which this host does not serve; mapped forward to claude-sonnet-5 (lean.json newest_only) and confirmed by the user at GATE 1.",
-  "ledger_caveat": "cost.py prices only input/output tokens and ignores cache-creation and cache-read, under-reporting roughly 2x on cache-heavy runs. Wave 1: ledger $2.48 vs host-reported $4.66 actual. Track budget_usd against the host figure."
+  "_availability_note": "The saved defaults file pinned backend/qa to claude-sonnet-4-5, which this host does not serve; mapped forward to claude-sonnet-5 (lean.json newest_only) and confirmed by the user at GATE 1.",
+  "_ledger_caveat": "cost.py prices only input/output tokens and ignores cache-creation and cache-read, under-reporting roughly 2x on cache-heavy runs. Wave 1: ledger $2.48 vs host-reported $4.66 actual. Track budget_usd against the host figure.",
+  "_host": "hermes (delegate_task; children inherit session model - no per-spawn pinning)",
+  "_original_claude_table": {
+    "planner": "claude-opus-5",
+    "implementer": "claude-sonnet-5",
+    "reviewer": "claude-opus-5",
+    "status": "blocked by Cloudflare edge 403 as of 2026-09-05 ~12:30 HKT; restore by re-approval if Claude access returns"
+  }
 }

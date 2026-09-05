@@ -49,7 +49,9 @@ day-of-week, using full names: January, Monday):
 | `*/s` | `every <ord(s)> <unit>` | `every <ord(s)> <unit>` |
 | `a` | `<unit> a` if first element, else `a` | `Monday` |
 | `a-b` | `every <unit> from a through b` | `Monday through Friday` |
-| `a-b/s`, `a/s` | `every <ord(s)> <unit> from a through b` | `every <ord(s)> <unit> from Monday through Friday` |
+| `a-b/s` | `every <ord(s)> <unit> from a through b` | `every <ord(s)> <unit> from Monday through Friday` |
+(`a/s` row removed 2026-09-05 per revised ADR-006: the form never parses, so the grammar
+needs no phrase for it.)
 
 `<unit>` is `minute`, `hour`, `day-of-month`, `month`, `day-of-week`. `@reboot` bypasses the
 grammar entirely with the fixed sentence from ADR-004. The timezone is not part of the
@@ -70,5 +72,6 @@ sentence; it belongs to the run list.
 
 T-006 golden file `tests/golden/descriptions.txt`, one line per expression, including:
 `* * * * *`, `*/2 * * * *`, `5 * * * *`, `0 0 * * *`, `0 9,17 * * *`, `5 9-17 * * *`,
-`*/15 9-17 * * MON-FRI`, `0 0 13 * FRI`, `0 0 */2 * MON`, `0 0 1-31 * MON`, `5/10 * * * *`,
-`@yearly`, `@weekly`, `@reboot`.
+`*/15 9-17 * * MON-FRI`, `0 0 13 * FRI`, `0 0 */2 * MON`, `0 0 1-31 * MON`, `0-59/15 * * * *`
+(replaced `5/10 * * * *` 2026-09-05: that expression no longer parses post ADR-006; the
+ascending form keeps the `a-b/s` phrase pinned), `@yearly`, `@weekly`, `@reboot`.

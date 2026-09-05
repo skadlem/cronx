@@ -69,9 +69,15 @@ silently breaks all three ADRs at once — that is the single most important inv
 
 Parsing order inside a field, so error messages stay precise: reject `L`/`W`/`#`/`?`
 (ADR-007) -> split on `,` -> per element, resolve names (month and day-of-week only,
-ADR-005) -> match one of the six forms -> range and step validation (ADR-006) -> expand.
-Macros are matched first, case-insensitively, against the whole expression; a macro other
-than `@reboot` is rewritten to its five-field text and parsed normally (KB: `cron-macros`).
+ADR-005) -> match one of the five accepted forms (a bare `a/s` is rejected here with the
+ascending-rewrite hint, ADR-006) -> range and step validation (ADR-006) -> expand.
+Step expansion starts at the element's range floor, and a bare `*` range means the FIELD
+minimum (Vixie get_list): dom `*/2` = {1,3,…,31} (odd dates — crontab(5) "uneven date"
+worked case), minute `*/2` = {0,2,…}. Macros are matched first, case-insensitively,
+against the whole expression; a macro other than `@reboot` is rewritten to its five-field
+text and parsed normally (KB: `cron-macros`). Whitespace between fields is collapsed
+`str.split()`-style: leading, trailing, and repeated spaces/tabs are accepted, so
+copy-pasted lines parse.
 
 ## 3. Pipeline
 
@@ -261,7 +267,7 @@ ADR supersession.
 
 ## 6. Things deliberately absent
 
-No `Field` subclasses or per-field parser classes — one `Element` triple covers all six
+No `Field` subclasses or per-field parser classes — one `Element` triple covers all five
 forms. No abstract "output formatter" — two functions in `cli.py`. No caching layer;
 `ZoneInfo` already caches, and the search is thousands of cheap operations, not millions.
 No logging. No `available_timezones()` anywhere (slow, KB: `python39-stdlib-constraints`).

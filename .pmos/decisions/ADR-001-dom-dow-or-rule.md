@@ -15,7 +15,12 @@ Two things must be decided: (a) how "restricted" is tested, and (b) whether a st
 such as `*/2` in a day field is restricted. The KB records that Vixie tests the LITERAL
 asterisk as written, not the resulting value set, so `1-31` is restricted but `*` is not.
 It does not settle `*/2`, and POSIX prose and the Vixie implementation are read differently
-here (charter §0.6). There is no cron daemon on this host to diff against (RSK-2).
+here.
+<!-- 2026-09-05 revision note: the original Context claimed there was no cron on this host
+     to diff against. Wrong — GATE 1 found `cron 3.0pl1` + `crontab -n`, and crontab(5)'s
+     NOTES section carries the worked `*/n` day-field case verbatim ("0 0 */2 * sun" =
+     Sundays on uneven dates). The Decision below already cites it; Context kept as
+     historical. -->
 
 ## Options considered
 
@@ -39,7 +44,10 @@ else:                     dom_match OR  dow_match
 ```
 
 Consequently `0 0 1-31 * MON` uses OR, `0 0 * * MON` uses AND, and — the sub-question —
-`0 0 */2 * MON` uses **AND** (even days of the month that are also Mondays), not OR. Note
+`0 0 */2 * MON` uses **AND** (odd-numbered days of the month that are also Mondays; Vixie's
+`get_list` starts a step walk at the field minimum, and the day-of-month minimum is 1, so
+`*/2` = {1,3,…,31} — confirmed verbatim by crontab(5): "`0 0 */2 * sun` runs every Sunday
+that's an uneven date"), not OR. Note
 the rule is deliberately textual to the first character only: `5,*` is restricted,
 `*/2,5` is not. That is what Vixie does.
 
@@ -52,12 +60,16 @@ the rule is deliberately textual to the first character only: `5,*` is restricte
 - Negative: `*/2` in a day field surprises users who read the POSIX sentence. Mitigation:
   ADR-009's sentence always names both day clauses and the connective, so the output shows
   which rule was applied rather than hiding it.
-- **Residual uncertainty (the GATE 1 question):** the oracle chunk states the literal-`*`
-  rule but gives no worked `*/n` day-field example, and it cannot be diffed against a live
-  cron here. If that is wrong, supersede this ADR: only `star` and the day rule change —
-  one predicate and one branch, plus the oracle test.
+- **Residual uncertainty: RETIRED 2026-09-05.** The original bullet said the literal-`*`
+  rule could not be diffed against a live cron. The crontab(5) NOTES worked case
+  (`0 0 */2 * sun` = Sundays on uneven dates) settles it for this Vixie build. Supersede
+  protocol stays as written: only `star` and the day rule would change — one predicate and
+  one branch, plus the oracle test.
 
 ## Pinned by
 
 T-008 oracle cases: `0 0 13 * FRI` fires every 13th and every Friday; `0 0 1-31 * MON` ≠
-`0 0 * * MON`; `0 0 */2 * MON` fires only on even-numbered Mondays; `0 0 * * 0` ≡ `0 0 * * 7`.
+`0 0 * * MON`; `0 0 */2 * MON` fires only on odd-numbered-date Mondays (see the crontab(5)
+worked case above); `0 0 * * 0` ≡ `0 0 * * 7`.
+<!-- corrected 2026-09-05 post-L-3 review: parenthetical originally said "even days",
+     which inverts Vixie's minimum-start step expansion; mechanism unchanged -->

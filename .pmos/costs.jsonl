@@ -2,3 +2,6 @@
 {"ts": "2026-09-04T15:44:59+00:00", "wave": null, "role": "planner", "label": "planner-1a", "model": "claude-opus-5", "effort": "", "tokens_in": 46, "tokens_out": 55764, "usd": 1.3943, "source": "measured", "status": "ok"}
 {"ts": "2026-09-04T15:50:52+00:00", "wave": null, "role": "planner", "label": "planner-1b", "model": "claude-sonnet-5", "effort": "", "tokens_in": 20, "tokens_out": 24349, "usd": 0.3653, "source": "measured", "status": "ok"}
 {"ts": "2026-09-04T16:30:21+00:00", "wave": null, "role": "implementer", "label": "impl-c1", "model": "claude-sonnet-5", "effort": "", "tokens_in": 32, "tokens_out": 27105, "usd": 0.4067, "source": "measured", "status": "failed"}
+{"ts": "2026-09-04T16:49:21+00:00", "wave": null, "role": "implementer", "label": "impl-c1-retry", "model": "claude-sonnet-5", "effort": "", "tokens_in": 8, "tokens_out": 967, "usd": 0.0145, "source": "measured", "status": "failed"}
+{"ts": "2026-09-05T05:19:31+00:00", "wave": 2, "role": "reviewer", "label": "adversarial-l3", "model": "qwen3.8-flash", "effort": "", "tokens_in": 150000, "tokens_out": 12000, "usd": null, "source": "estimated", "status": "ok"}
+{"ts": "2026-09-05T05:31:56+00:00", "wave": 2, "role": "reviewer", "label": "adversarial-l3-rereview", "model": "qwen3.8-flash", "effort": "", "tokens_in": 90000, "tokens_out": 9000, "usd": null, "source": "estimated", "status": "ok"}

@@ -36,6 +36,15 @@ R-010 requires these to be rejected with a precise error rather than guessed at.
 - field count ≠ 5 (and not a macro) →
   `expected 5 fields (minute hour day-of-month month day-of-week), got 6 — 6- and 7-field
   forms with seconds or year are Quartz/Spring syntax, not POSIX cron`
+  - Amendment 2026-09-05 (L-3 review): when the field count is exactly 6 and the sixth
+    token starts with `/`, `~`, or a `$PATH`-style absolute/`./` path (the shape of a real
+    command, not a Quartz year field), the message continues
+    `; if your six tokens are a crontab LINE ('... /usr/bin/backup'), pass only the first
+    five fields — the command is not part of the expression`. The Quartz diagnosis is
+    printed only otherwise. Rationale: the charter's own named user holds a full crontab
+    line, and this is its most likely first invocation; a wrong dialect name sends them to
+    the wrong manual page. Detection is one startswith() test on token 6 — no command
+    parsing, the non-goal in charter §4 stands.
 - a field containing `L`, `W`, `#` or `?` →
   `day-of-week field: 'MON#2': the '#' extension (nth weekday of month) is Quartz syntax,
   not supported`

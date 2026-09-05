@@ -170,3 +170,89 @@ than passing vacuously, which is the good outcome; but the command in the plan d
 as written. Fix is `tests/__init__.py`, folded into the retry. Worth recording because "the
 acceptance command runs nothing and looks fine" is the exact failure class the QA gate exists
 to catch, and here it was one `__init__.py` away from being silent.
+
+## 2026-09-05 — Resume (new session): pre-flight repairs + step 7 enrich
+- state.py at resume: stage 4, 1 FAIL (team-model.json validity) + 1 WARN (jurisdiction pack).
+- FIXED team-model.json: four prose keys (note/team/availability_note/ledger_caveat) were
+  top-level, so state.py read them as roles and the validity check FAILED. The prose stays
+  (it documents GATE 1 decisions); underscore-prefixed to match the not-startswith-underscore
+  contract in state.py:363-388 and cost.py budget_of(). Roles now parse: implementer, planner,
+  reviewer. The lean-team marker lives in .pmos/team.json, where state.py reads it.
+- tests/__init__.py added (the A-014 discovery defect from yesterday) + git added:
+  unittest discover now collects tests — 2 run, 1 ERROR on the missing CronxError import.
+  That is the correct RED for the TDD handoff, not a broken harness.
+- Step 7 jurisdiction pack: SKIPPED with reason. Charter section 8 records jurisdictions N/A
+  (offline local CLI, no data collection, no distribution surface); config legal_strict=true
+  but state.py's WARN is informational, not blocking. Logged so QA does not chase it.
+- Step 7 enrich: 15 project chunks authored under kb-sources/project/ and indexed at priority
+  9 — shared 4, pm 2, architect 3, backend 3, qa 3 — reported 15 new, 0 updated, 0 pruned.
+  Chunks carry their ADR/T/A ids so KB and trace agree. Budgets after: every ns headroom > 0
+  (qa the tightest at 2766).
+
+## 2026-09-05 — BLOCKER (infra): the claude host's API is blocked at the network edge
+- Cheap probes (haiku, 6 words, $0) before spending on a worker: BOTH team models and haiku
+  return `Failed to authenticate. API Error: 403 Request not allowed` (api_error_status 403,
+  terminal_reason api_error). This is NOT the session rate limit (that reset 04:30 HKT) and
+  NOT model or CLI fault.
+- Evidence it is IP/edge-level, not account or token:
+  * a deliberately BOGUS token to /v1/messages also gets 403 (would be 401 if traffic reached
+    the API); the real (unexpired, Pro-tier) OAuth token gets the identical 403;
+  * GET https://api.anthropic.com/ -> 403 from cloudflare (cf-ray ...-HKG) while claude.ai ->
+    302 and status.claude.com -> 200 "All Systems Operational"; IPv6 has no route (000);
+    browser-UA swap changes nothing. Connection: Hutchison HK AS10118, dynamic IP.
+- Same account + same box ran wave 1a/1b fine yesterday -> most likely the IP rotated into a
+  flagged pool; Anthropic's API hostname is behind stricter Cloudflare rules than its web apps.
+- Consequence: waves 2b-4 cannot spawn (implementer+reviewer ladders both point at
+  claude-opus-5/sonnet-5). Per spawn-fallback rule 6: escalate, do not loop. The claude host's
+  hermes-fallback would put workers on the parent model (qwen3.8-flash), which contradicts the
+  GATE 1 tier bars (reviewer 0.95, no 3.9 interpreter behind its audit) — not chosen silently.
+- Pending when the route is back: wave 2 chunk 2 (T-004, T-005), then chunks 3-4; L-3
+  adversarial review + GATE-2 verdict; reviewer wave (T-010/T-012). Ledger still $2.90.
+
+## 2026-09-05 — GATE 1 REVISION (user): team models re-pinned to hermes host
+- Anthropic edge-block found mid-wave (above). User decision: ALL roles -> qwen3.8-flash
+  (custom:QwenTokenPlan) — over the recommend.py-scored table (planner/implementer
+  qwen3.8-max 80.2/63.3, reviewer deepseek-v4-pro 86.7). Explicit cost-first choice; the
+  lean 0.95 reviewer tier bar is knowingly overridden. Original claude table preserved in
+  team-model.json under _original_claude_table for when the route returns.
+- Mechanism: hermes host has no per-spawn model flag; children inherit the session model.
+  All spawns now run via delegate_task on qwen3.8-flash. Ladders rewritten (flash first,
+  then scored alternatives via config pin). available-models.txt replaced with the host's
+  callable list. state.py: team-model valid, 14 OK, ledger untouched $2.90/$30.
+- Log wording: the gate-two approval phrase, unhyphenated, in pending-work lines; log_mentions() matched the
+  phrase-literal and falsely promoted stage to 6 (GATE-2 passed) before the gate was ever
+  presented. Detector now reads stage 5 / step 8 as it should. (Template trap: the stage
+  marker is a phrase match on log.md; only the real approval line may contain it.)
+
+## 2026-09-05 — L-3 adversarial review: CONCERNS -> all items fixed -> re-review
+- First hermes-host worker (delegate_task, qwen3.8-flash): attacked R-001..R-014, verdict
+  CONCERNS with 6 findings. Quality note: it independently re-probed crontab -n and caught a
+  contradiction I had SOWN — my enriched qa.md KB chunk had written the leading-star case as a
+  union ("uneven dates ∪ Mondays -> AND"), and ADR-001 says "even days". Both wrong vs the
+  reference.
+- Adjudication of finding 2 (`0 0 */2 * MON`): crontab(5) NOTES verbatim — "0 0 */2 * sun runs
+  every Sunday that's an UNEVEN date" — Vixie get_list() steps from the FIELD MINIMUM (dom min
+  1 -> {1,3,..31} = odd/uneven dates) AND'd with dow. Fixed ADR-001 (both the parenthetical and
+  the Pinned-by line, with correction note), architecture §2 (expansion rule made explicit),
+  kb-sources/project/qa.md re-indexed (3 updated).
+- Other fixes (coordinator-PM rework, deviation logged; re-lint clean 96 refs):
+  R-001 charter struck a/s (pre-review edit) + A-002 EARS form rewritten (valid forms vs
+  rejected, cites ADR-006/012); R-010 gained a/s + descending ranges; ADR-009 dropped the a/s
+  table row and its golden entry (replaced by 0-59/15, the a-b/s phrase stays pinned);
+  R-007 historical-rule clause replaced with what A-011 actually measures; R-008 "stable"
+  struck with a README-agreement definition; A-011 zones NAMED (New_York 1h, Lord_Howe 30min
+  — verified present in tzdata — Kathmandu no-transition no-op) with window, anchor and
+  schedules; A-015 corpus pinned (probe transcript + ADR Pinned-by + boundaries, min 40).
+- Missing-scenario fix: a pasted crontab LINE (6th token = command) was diagnosed as Quartz.
+  ADR-007 amendment: command-shaped token 6 -> hint 'pass only the first five fields', Quartz
+  name only otherwise. Whitespace contract (str.split()-style collapse) pinned in
+  architecture §2. Both new expectations added to tests/test_parse.py (RED alongside the
+  parser — same TDD order as chunk 1).
+
+## 2026-09-05 — L-3 re-review: PASS; GATE-2 packet complete
+- Re-review worker verified all six fixes: PASS, 3 cosmetic residuals (ADR-001 stale Context
+  'no cron to diff against', backend.md 'six forms' self-contradiction, R-007 'historical
+  offset steps' imprecision). All three fixed same session; kb re-indexed (3 updated);
+  artifacts --strict still 0; both review runs in ledger as reviewer/estimated.
+- Deviation note: re-review was scoped to fix-verification, not a fresh full attack — the
+  protocol's CONCERNS loop says 'fix + re-review', and the fix list was known.

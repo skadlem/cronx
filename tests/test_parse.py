@@ -196,6 +196,28 @@ class FieldCountTest(unittest.TestCase):
         self.assertIn("6", ctx.exception.message)
         self.assertEqual(ctx.exception.code, 1)
 
+    def test_crontab_line_gets_the_command_hint(self):
+        # ADR-007 amendment: token 6 shaped like a command -> say so, don't blame Quartz.
+        with self.assertRaises(CronxError) as ctx:
+            parse("0 0 13 * FRI /usr/bin/backup")
+        msg = ctx.exception.message
+        self.assertIn("crontab LINE", msg)
+        self.assertNotIn("Quartz", msg)
+
+    def test_six_field_quartz_year_still_blames_quartz(self):
+        with self.assertRaises(CronxError) as ctx:
+            parse("0 0 2 * * 2026")
+        self.assertIn("Quartz", ctx.exception.message)
+
+
+class WhitespaceTest(unittest.TestCase):
+    """Architecture §2: fields collapse str.split()-style."""
+
+    def test_leading_trailing_and_double_spaces_parse(self):
+        s = parse("  0  0 *  *  * \t")
+        self.assertEqual(s.minute.values, frozenset({0}))
+        self.assertTrue(s.hour.star)
+
 
 if __name__ == "__main__":
     unittest.main()
