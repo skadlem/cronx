@@ -1,0 +1,22 @@
+# Golden contract file (T-006 / ADR-009 / A-006 / charter R-005, A-006).
+# Format: one line per expression, EXPRESSION<TAB>SENTENCE. The two '#' comments
+# aside, every line was HAND-DERIVED on paper by applying ADR-009's clause
+# grammar and element-phrase table mechanically BEFORE cronx/describe.py
+# produced any output. This file is a contract, not a snapshot: a wording
+# change must arrive as an intentional diff here, never as regenerated output.
+# Derivation trace for each row lives in .pmos/out/implementer/notes.md.
+* * * * *	Every minute.
+*/2 * * * *	At every 2nd minute.
+5 * * * *	At minute 5.
+0 0 * * *	At 00:00.
+0 9,17 * * *	At minute 0 past hour 9, 17.
+5 9-17 * * *	At minute 5 past every hour from 9 through 17.
+*/15 9-17 * * MON-FRI	At every 15th minute past every hour from 9 through 17, on Monday through Friday.
+0 0 13 * FRI	At 00:00, on day-of-month 13 or on Friday.
+0 0 */2 * MON	At 00:00, on every 2nd day-of-month and on Monday.
+0 0 1-31 * MON	At 00:00, on every day-of-month from 1 through 31 or on Monday.
+0-59/15 * * * *	At every 15th minute from 0 through 59.
+@yearly	At 00:00, on day-of-month 1, in January.
+@weekly	At 00:00, on Sunday.
+@reboot	At system startup (`@reboot` has no wall-clock schedule).
+@hourly	At minute 0.

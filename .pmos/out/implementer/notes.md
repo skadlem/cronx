@@ -218,3 +218,105 @@ test (test_py39_syntax) covers all four new/changed files and is green.
   (same as chunk 1; reviewer wave T-010 owns the stdlib-API floor audit).
 - T-008 oracle/monotonicity suites (property test across 3 zones × 5 years)
   remain a later wave; my fixed cases are the unit-level seeds.
+
+
+## Wave 2 chunk 3 — T-006 (describe + golden), T-009 (CLI), T-007 (tz errors)
+
+Implementer run 2026-09-05. Files: `cronx/describe.py` (97 non-blank LOC, budget ~110),
+`cronx/cli.py` (115 non-blank, budget ~110), `cronx/__main__.py` (3 lines, unchanged),
+`tests/test_describe.py` (7 tests), `tests/golden/descriptions.txt` (15 rows),
+`tests/test_cli.py` (20 tests), `tests/test_tz_errors.py` (4 tests).
+
+### TDD order and golden discipline kept
+- T-006: golden file hand-derived on paper from ADR-009's clause grammar + element-phrase
+  table BEFORE describe.py produced any output; then tests/test_describe.py (RED: import
+  error); then the implementation. The test file only ever compares describe(parse(x))
+  against the file — never regenerates it.
+- T-009: tests/test_cli.py first (RED), then cli.py. T-007: tests/test_tz_errors.py first
+  (branch 2 RED against occurrences.py until the pure-Python pin was found), CLI wiring
+  already in place from T-009.
+
+### Hand-vs-derived discrepancies resolved during T-006 (the three rows I corrected before GREEN)
+1. `0 9,17 * * *` — my first pass wrote crontab.guru prose "At 09:00, 17:00."; re-applying
+   the grammar mechanically: minute=[0] and hour=[9,17] are NOT each one value, so no HH:MM
+   form; P(minute)="minute 0" (first element), P(hour)="9, 17" → "At minute 0 past hour 9, 17."
+2. `0-59/15 * * * *` — first pass dropped the range: the `a-b/s` row is
+   "every <ord(s)> <unit> from a through b" — the from/through suffix is part of that row,
+   unlike `*/s`. → "At every 15th minute from 0 through 59."
+3. `@hourly` (= `0 * * * *`) — first pass wrote "At minute 0 past every hour."; the grammar's
+   fourth Time branch says "('past …' elided if hour is exactly `*`)" → "At minute 0."
+The two implementation bugs these derivations exposed (my code, not the file): (a) elision/
+"exactly *" tests initially used Field.star (leading-'*' flag) instead of text == "*" —
+`*/2` is the AND-branch's own example so star != "exactly *"; (b) the named `a-b` phrase
+"Monday through Friday" carries no "every <unit>" prefix, unlike numeric "every hour from
+9 through 17" (the `a-b` table row differs by column).
+
+### ⚠ FLAGGED — one ADR-009 wording choice the tables leave open (applied mechanically, no stop needed)
+"`5 9-17 * * *`" pins numeric `a-b` = "every hour from 9 through 17"; the *numeric bare `a`
+non-first element* ("else `a`") plus `*, a` list heads are not in the pinned list; the table
+determines them ("at 5, 30 past hour 9" style) and the implementation follows the table.
+No ambiguity blocked any golden row.
+
+### T-007 — how the missing-tz-database pin works (ADR-011's reset_tzpath branch, now IN the suite)
+Probe findings on this host (Python 3.14): `zoneinfo.reset_tzpath([])` is a NO-OP (zoneinfo
+falls back to the system dirs), and the C `ZoneInfo` cache cannot be invalidated, so a warm
+`ZoneInfo("UTC")` from earlier tests makes the UTC probe succeed even with a dead TZPATH.
+The pin therefore (a) reset_tzpath() to a nonexistent directory and (b) drives zoneinfo's
+documented pure-Python class `zoneinfo._zoneinfo.ZoneInfo` (has `clear_cache`, reads TZPATH
+live) patched into `cronx.occurrences.ZoneInfo`, restored in tearDown along with the path —
+global state mutation is contained inside the test class. Both branches assert exact message
+prefix + exit 2 + empty stdout + one line + no Traceback. `resolve_zone`/`occurrences.py`
+needed NO change: the wiring chunk 2 built already satisfies ADR-011; T-007's touches
+list included them but only the test was needed. A third test pins that a ValueError-shaped
+key ("/etc/shadow") stays "unknown timezone", not the false "missing database".
+
+### CLI contract decisions taken from §4/ADR-010 verbatim
+- `-n 0`/`-n -3` rejected at code 2 (argparse type=int accepts them; validated before
+  parse so a bad -n with a bad expression is still an invocation error — no precedence rule
+  exists in the docs and both orders exit 2/1 identically on valid input).
+- argparse's blocky usage error overridden in a `_Parser.error` subclass: one
+  `cronx: error: <msg>` line, SystemExit(2) caught by main() → returns 2. `--help` exits 0.
+- Text rows: local `isoformat(sep=' ')`, UTC `isoformat()` (+00:00); gap suffix renders
+  HH:MM from `Occurrence.nominal`. Empty list keeps the two header lines then the prose.
+  @reboot: expression line + sentence, no run list (ADR-004; -n/--from/--tz accepted —
+  JSON `from` still records the resolved reference instant; ADR-004's "ignored" is read as
+  "do not affect the (empty) run list", consistent with "every key always present").
+- `main()` catches only CronxError and SystemExit-from-parser; anything else is a bug and
+  tracebacks (ADR-010 "allowed to look like one").
+- day_rule: "or" iff NOT (dom.star or dow.star) — match.day_matches' predicate inverted;
+  null for @reboot (fields absent).
+- --from naive → wall clock in --tz via replace(tzinfo=zone) (fold=0), then UTC.
+
+### My own fresh test errors fixed before GREEN (TDD-allowed): (a) expected both ambiguous
+passes for a FIXED `30 1 * * *` — ADR-003 lists both passes only for wildcards; rewrote to
+assert first-pass-only for fixed + both passes for `* 1 * * *`. (b) forgot --tz on the
+exclusivity case, so the wall-clock --from resolved in UTC and 03:00Z ≠ 07:00Z.
+
+### Import discipline verified
+describe.py imports `.parse` + typing only. cli.py is the only module importing argparse,
+json, sys; the only files touching SystemExit are cli.py and the 3-line __main__.py.
+occurrences/match/parse UNCHANGED this chunk (git status proves it). 3.9 floor:
+`Optional/List` typing only, no 3.10+ APIs (test_py39_syntax green over all files).
+
+### Verification — exact outputs
+`python3 -m unittest discover -v` → `Ran 120 tests in 0.020s / OK`
+(per-module: describe 7, cli 20, tz_errors 4 + existing 89 all OK)
+`python3 /home/madiyar/pm-agent-team/tools/artifacts.py --project . --strict` → exit 0,
+`artifacts OK: every reference resolves, every item is covered`
+`python3 -m cronx '0 2 * * *' --tz America/New_York --from 2026-03-07T00:00:00+00:00 -n 3`
+reproduces §4's example block byte-for-byte; exit codes 0/1/2 spot-checked.
+
+### Files touched (chunk 3)
+- `cronx/describe.py` — written (was a 1-line stub).
+- `cronx/cli.py` — written (was a 3-line stub docstring).
+- `cronx/__main__.py` — unchanged (already the 3-line contract).
+- `tests/test_describe.py`, `tests/golden/descriptions.txt`, `tests/test_cli.py`,
+  `tests/test_tz_errors.py` — created (TDD-first).
+- `tests/test_parse.py`/`test_macros.py`/`test_match.py`/`test_dst.py` — NOT modified.
+- `.pmos/out/implementer/notes.md` — this section appended.
+
+### Unchecked / deferred (chunk 3)
+- README.md schema doc (R-008's "documented" clause) is T-011's, per plan — not in my touches list.
+- Missing-tzdb pin depends on `zoneinfo._zoneinfo` staying a pure-Python fallback on 3.9–3.14
+  (it is; but a future C-cache clear API could simplify the test).
+- T-008 oracle suite, T-010 reviewer audit, T-012 differential — later waves, unchanged.

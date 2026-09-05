@@ -283,3 +283,22 @@ L-3 roundtrip and the six fixes are part of what was approved.
   both, strict monotonicity, Lord_Howe 30-min gap, unknown-zone code 2.
 - Child's unchecked list is honest and correctly scoped (tzdb-missing pin -> T-007, 5-year
   property -> T-008, 3.9 runtime -> T-010).
+
+## 2026-09-05 — Wave 2 chunk 3: GREEN (T-006, T-009, T-007) — first runnable deliverable
+- impl-c3 @ qwen3.8-flash, 51 min / 50 calls (longest yet; golden discipline was the cost).
+  120/120 green (31 new). Coordinator audits beyond the suite:
+  * GOLDEN FILE: I know this generator class of error — snapshot-instead-of-contract. The
+    child's notes show genuine hand-derivation: it CAUGHT two of its own implementation bugs
+    from paper answers (@hourly elision -> 'At minute 0.'; 'every hour from 9 through 17' vs
+    'Monday through Friday' column asymmetry in ADR-009's table). A snapshot file can't
+    disagree with code; this one did, three times, and code moved. That's the proof.
+  * LIVE CLI PROBES: architecture §4's sample output reproduced verbatim (0 2 * * * / NY /
+    --from 2026-03-07 -> 'At 02:00.', 3 rows, 03-08 gap annotation at the jump). Exit codes:
+    unsatisfiable 0 + 'no runs found within 9 years', '#2' -> 1 with the host comment-trap
+    note (ADR-007 amendment style), bad --tz -> 2, @reboot -> 0. --json: all keys, nulls
+    present, day_of_week naming, 'and' day_rule.
+- Host finding worth keeping (T-007): zoneinfo C impl caches lookups and reset_tzpath([]) is
+  a no-op on this host -> missing-tzdb branch testable only via zoneinfo's _zoneinfo pure-
+  Python class with reset_tzpath(<nonexistent dir>) + tearDown restore. In notes.md.
+- LOC final-ish: parse 178/180, match 69/90, occurrences 124/~120 (flagged), describe+cli
+  per module budgets in notes.
