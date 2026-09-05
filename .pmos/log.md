@@ -344,3 +344,20 @@ L-3 roundtrip and the six fixes are part of what was approved.
   pass, 0 defects found by gate, 0 product bugs exposed by 4 implementation chunks;
   1 coordinator typo in own test (caught by worker refusal); ledger $2.90 (claude runs),
   8 flash runs unpriced/estimated (host shim gives no usage on delegate_task).
+
+## 2026-09-05 — CORRECTION to the BLOCKER section (user): the cause was the usage limit, not the edge
+
+The BLOCKER diagnosis above blamed an IP/edge-level block. The user's correction: the
+account had run out of usage limit — that is why the switch to the hermes host on
+qwen3.8-flash was made. The probes recorded there (identical 403 for bogus and real
+tokens; cloudflare 403 on api.anthropic.com while claude.ai answered) remain what was
+observed at the time, and the escalation decision stands as made; what changes is the
+cause attribution. Kept as an appended correction, not a rewrite: the evidence trail
+was published with the repo (github.com/skadlem/cronx) and honest history beats a
+tidied one.
+
+Ledger effect (template change of the same day): the 3 failed runs are tagged
+failure_class=infra in costs.jsonl + waves.jsonl — route/billing deaths, not model
+faults — so by_model quality rates (events.py report, recommend.py L-13) exclude them.
+Before: claude-sonnet-5 "1/3 ok (33%) - historically fails here". After: 1/1 quality
+runs; the outage no longer poisons the next project's model selection.
